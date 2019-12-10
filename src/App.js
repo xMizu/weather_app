@@ -3,7 +3,7 @@ import Forecast from "./containers/Forecast";
 
 function App() {
   const homepageStyle = {
-    backgroundColor: "#B2DDF7",
+    backgroundColor: "#59C3C3",
     height: "100vh",
     width: "100vw",
     margin: 0,

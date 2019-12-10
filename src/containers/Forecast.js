@@ -2,31 +2,13 @@ import React from "react";
 import DailyWeather from "../components/DailyWeather";
 import moment from "moment";
 
-const weatherImg = {
-  fog: "🌫",
-  windy: "💨",
-  "clear sky": "☀️",
-  rain: "🌧",
-  "light rain": "🌦",
-  snow: "❄️",
-  clouds: "🌤",
-  "overcast clouds": "⛅️"
-};
-
 class Forecast extends React.Component {
   state = {
     country: "us",
     city: null,
-    dateTime: null,
-    weather: null,
-    description: null,
     search: "",
-    image: ""
+    forecast: []
   };
-
-  KelvinToFahrenheitConverter(kelvin) {
-    return (kelvin - 273.15) * 1.8 + 32.0;
-  }
 
   changeHandler(e) {
     const { name, value } = e.target;
@@ -36,17 +18,26 @@ class Forecast extends React.Component {
   submbitHandler(e) {
     e.preventDefault();
     fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${this.state.search},${this.state.country}&APPID=${process.env.REACT_APP_WEATHER_API_KEY}`
+      `https://api.openweathermap.org/data/2.5/forecast?q=${this.state.search},${this.state.country}&units=imperial&APPID=${process.env.REACT_APP_WEATHER_API_KEY}`
     )
       .then(res => res.json())
       .then(data => {
+        const dateTime = moment.unix(data.list[0].dt).calendar();
+        const time = dateTime
+          .split(" ")
+          .splice(2, 3)
+          .join(" ");
+        const fiveDay = data.list.filter(date =>
+          moment
+            .unix(date.dt)
+            .calendar()
+            .includes(time)
+        );
+
         this.setState({
           ...this.state,
-          city: this.state.search,
-          description: data.weather[0].description,
-          weather: parseInt(this.KelvinToFahrenheitConverter(data.main.temp)),
-          dateTime: moment.unix(data.dt).calendar(),
-          image: weatherImg[data.weather[0].description]
+          forecast: fiveDay,
+          city: this.state.search
         });
       })
       .catch(err => {
@@ -95,15 +86,11 @@ class Forecast extends React.Component {
           </div>
         </nav>
         <div style={weatherDisplay}>
-          {this.state.weather ? (
-            <DailyWeather
-              weather={this.state.weather}
-              city={this.state.city}
-              time={this.state.dateTime}
-              description={this.state.description}
-              image={this.state.image}
-            />
-          ) : null}
+          {this.state.forecast
+            ? this.state.forecast.map((day, i) => (
+                <DailyWeather key={i} day={day} city={this.state.city} />
+              ))
+            : null}
         </div>
       </div>
     );
